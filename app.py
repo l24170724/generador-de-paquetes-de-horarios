@@ -9,7 +9,7 @@ CONFIG = {
     "port": 5432,
     "dbname": "paquetes",
     "user": "postgres",
-    "password": "123",
+    "password": "postgres",
 }
 
 HORAS = list(range(7, 22))
