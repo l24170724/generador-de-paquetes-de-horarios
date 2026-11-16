@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block contenido %}
+
+{# sin maestro elegido muestra la lista de maestros; con maestro, su ficha #}
+{% if not prof %}
+<section class="tarjeta">
+  <h2>Nuevo maestro <small>· Máximo {{ max_maestros }} maestros ({{ profesores | length }} registrados)</small></h2>
+  <form method="post" action="{{ url_for('nuevo_profesor') }}" class="formulario">
+    <label>Clave
+      <input name="clave" maxlength="10" pattern="[A-Za-z0-9]+" data-solo="clave" required
+             title="Solo letras (A-Z, a-z) y números (0-9)">
+      <span class="ayuda">Máximo 10 caracteres. Solo letras (A-Z, a-z) y números (0-9).</span>
+    </label>
+    <label class="ancho">Nombre
+      <input name="nombre" maxlength="30" pattern="[A-Za-z0-9 ]+" data-solo="nombre" required
+             title="Solo letras (A-Z, a-z), números (0-9) y espacios">
+      <span class="ayuda">Máximo 30 caracteres. Solo letras (A-Z, a-z), números (0-9) y espacios.</span>
+    </label>
+    <button class="principal">Registrar</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>Disponibilidad y prioridad por maestro</h2>
+  <div class="desplazable">
+  <table>
+    <thead><tr><th>Clave</th><th>Nombre</th><th>Horario disponible</th><th>Prioridad</th><th>Grupos</th></tr></thead>
+    <tbody>
+    {% for p in profesores %}
+      <tr>
+        <td><a href="{{ url_for('ver_profesor', id=p.id) }}"><strong>{{ p.clave }}</strong></a></td>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.disponibilidad }}</td>
+        <td>{{ p.prioridades }}</td>
+        <td>{{ p.grupos }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="vacio">No hay maestros registrados.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+{% else %}
+<section class="tarjeta">
+  <div class="fila-titulo">
+    <h2><a href="{{ url_for('profesores') }}" style="color: inherit; text-decoration: none;">Maestros</a>
+      › {{ prof.clave }} <small>· {{ prof.nombre }}</small></h2>
+    <form method="post" action="{{ url_for('eliminar_profesor', id=prof.id) }}"
+          onsubmit="return confirm('¿Eliminar a este maestro?')">
+      <button class="peligro">Eliminar maestro</button>
+    </form>
+  </div>
+</section>
+
+<div class="columnas">
+  <section class="tarjeta">
+    <h3>Materias por prioridad <small>· Máximo {{ max_prioridades }}</small></h3>
+    <ol class="lista">
+      {% for p in preferencias %}
+        <li>
+          <span><span class="num">{{ p.prioridad }}.</span><strong>{{ p.clave }}</strong> {{ p.materia }} <small>({{ p.semestre }}°)</small></span>
+          <span class="acciones">
+            {% if not loop.first %}
+            <form method="post" action="{{ url_for('subir_preferencia', id=prof.id, materia=p.id_materia) }}">
+              <button class="mini" title="Subir prioridad">↑</button>
+            </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('quitar_preferencia', id=prof.id, materia=p.id_materia) }}">
+              <button class="mini">Quitar</button>
+            </form>
+          </span>
+        </li>
+      {% else %}
+        <li class="vacio">Aún no tiene materias.</li>
+      {% endfor %}
+    </ol>
+    {% if preferencias | length >= max_prioridades %}
+    <p class="nota">Ya tiene el máximo de {{ max_prioridades }} materias. Quita una para agregar otra.</p>
+    {% elif materias %}
+    <form method="post" action="{{ url_for('agregar_preferencia', id=prof.id) }}" class="formulario">
+      <label class="ancho">Agregar con la siguiente prioridad
+        <select name="materia">
+          {% for m in materias %}<option value="{{ m.id }}">{{ m.semestre }}° · {{ m.clave }} {{ m.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="principal">Agregar</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta">
+    <h3>Horario disponible <small>· {{ prof.disponibilidad }}</small></h3>
+    <form method="post" action="{{ url_for('guardar_disponibilidad', id=prof.id) }}">
+      <div class="horas">
+        {% for h in horas %}
+          <label class="hora-check">
+            <input type="checkbox" name="horas" value="{{ h }}" {{ 'checked' if h in mis_horas }}>
+            <span>{{ h | hora }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <button class="principal">Guardar horario</button>
+    </form>
+  </section>
+</div>
+
+<section class="tarjeta">
+  <h3>Grupos asignados</h3>
+  <table>
+    <thead><tr><th>Horario</th><th>Paquete</th><th>Materia</th></tr></thead>
+    <tbody>
+    {% for c in horario %}
+      <tr><td>{{ c.horario }}</td><td>{{ c.paquete }}</td><td><strong>{{ c.clave }}</strong> {{ c.materia }}</td></tr>
+    {% else %}
+      <tr><td colspan="3" class="vacio">Sin grupos. Genera los paquetes para asignarle.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

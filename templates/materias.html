@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block contenido %}
+<section class="tarjeta">
+  <h2>Nueva materia <small>· Máximo {{ max_materias }} materias, una por cada letra de la A a la Z ({{ materias | length }} registradas)</small></h2>
+  <form method="post" action="{{ url_for('nueva_materia') }}" class="formulario">
+    <label>Clave
+      <input name="clave" maxlength="1" pattern="[A-Za-z]" data-solo="letra" required
+             title="Una sola letra (A-Z)" style="width: 70px; text-transform: uppercase;">
+      <span class="ayuda">Una sola letra (A-Z).</span>
+    </label>
+    <label class="ancho">Nombre
+      <input name="nombre" maxlength="30" pattern="[A-Za-z0-9 ]+" data-solo="nombre" required
+             title="Solo letras (A-Z, a-z), números (0-9) y espacios">
+      <span class="ayuda">Máximo 30 caracteres. Solo letras (A-Z, a-z), números (0-9) y espacios.</span>
+    </label>
+    <label>Semestre
+      <input name="semestre" type="number" min="1" max="8" value="1" required>
+      <span class="ayuda">Del 1 al 8</span>
+    </label>
+    <button class="principal">Registrar</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>Materias</h2>
+  <div class="desplazable">
+  <table>
+    <thead><tr><th>Semestre</th><th>Clave</th><th>Nombre</th><th>Grupos</th><th>Maestros que la eligieron</th><th></th></tr></thead>
+    <tbody>
+    {% for m in materias %}
+      <tr>
+        <td>{{ m.semestre }}°</td><td><strong>{{ m.clave }}</strong></td><td>{{ m.nombre }}</td><td>{{ m.grupos }}</td>
+        <td>{{ m.interesados }} {% if m.interesados == 0 %}<span class="etiqueta">nadie</span>{% endif %}</td>
+        <td class="derecha">
+          <form method="post" action="{{ url_for('eliminar_materia', id=m.id) }}"
+                onsubmit="return confirm('¿Eliminar {{ m.clave }}?')">
+            <button class="mini">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="vacio">No hay materias registradas.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

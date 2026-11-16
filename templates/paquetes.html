@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="columnas">
+  <section class="tarjeta">
+    <h2>Grupos por semestre</h2>
+    <table>
+      <thead><tr><th>Semestre</th><th>Clave</th><th>Grupos requeridos</th><th>Grupos cubiertos</th></tr></thead>
+      <tbody>
+      {% for m in materias %}
+        <tr class="{{ 'pendiente' if generado and m.asignados < m.grupos }}">
+          <td>{{ m.semestre }}°</td>
+          <td><strong>{{ m.clave }}</strong></td>
+          <td>{{ m.grupos }}</td>
+          <td>{{ m.asignados }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="vacio">No hay materias.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <form method="post" action="{{ url_for('definir_grupos') }}" class="formulario">
+      <label>Semestre
+        <select name="semestre">
+          {% for s in semestres %}<option value="{{ s.semestre }}">{{ s.semestre }}° ({{ s.grupos }} grupos)</option>{% endfor %}
+        </select>
+      </label>
+      <label>Cantidad de grupos
+        <input name="grupos" type="number" min="0" max="10" value="1" required>
+        <span class="ayuda">Máximo 10 grupos</span>
+      </label>
+      <button>Guardar</button>
+    </form>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Generar paquetes</h2>
+    <div class="nota">
+      El algoritmo crea una tabla de opciones con la disponibilidad y prioridades
+      de cada maestro, y va registrando grupos en este orden:
+      <ol>
+        <li>El maestro con menos opciones restantes.</li>
+        <li>Si empatan, la materia con mejor prioridad.</li>
+        <li>Si siguen empatados, la hora más temprana.</li>
+        <li>Y al final, la clave del maestro (M001 antes que M002).</li>
+      </ol>
+    </div>
+    <form method="post" action="{{ url_for('generar') }}">
+      <button class="principal grande">{{ 'Volver a generar' if generado else 'Generar paquetes' }}</button>
+    </form>
+  </section>
+</div>
+
+{% if generado %}
+<section class="tarjeta">
+  <h2>Paquetes generados</h2>
+  <div class="paquetes">
+  {% for p in paquetes %}
+    <div class="paquete">
+      <h3>Paquete {{ '%02d' | format(p.semestre) }}</h3>
+      <table class="horario">
+        <thead><tr><th>Horario</th>{% for g in p.grupos %}<th>{{ g }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for h in horas %}
+          <tr>
+            <th>{{ h | hora }}</th>
+            {% for g in p.grupos %}
+              {% set c = p.celdas.get((h, g)) %}
+              <td class="{{ 'ocupada' if c }}">
+                {% if c %}<strong>{{ c.clave }}</strong><span>{{ c.profesor }}</span>{% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+  </div>
+  <p class="nota">Cada clase se imparte a la misma hora de lunes a viernes.</p>
+</section>
+{% endif %}
+{% endblock %}
